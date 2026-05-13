@@ -1,31 +1,56 @@
 import streamlit as st
 from datetime import datetime
+import folium
+from streamlit_folium import st_folium
+from geopy.geocoders import Nominatim
+import requests
 
-st.title("Meine Sprach-KI")
+st.set_page_config(page_title="Universal KI", layout="wide")
 
-command = st.text_input("Gib einen Befehl ein:")
+st.title("Universal KI Assistent")
 
-def execute_command(command):
-    command = command.lower()
+geolocator = Nominatim(user_agent="universal_ki")
 
-    if "hallo" in command:
-        return "Hallo! Wie kann ich helfen?"
+command = st.text_input("Gib einen Befehl ein")
 
-    elif "uhrzeit" in command:
-        now = datetime.now().strftime("%H:%M")
-        return f"Es ist {now} Uhr."
+def show_city(city):
+    location = geolocator.geocode(city)
 
-    elif "youtube" in command:
-        st.markdown("[YouTube öffnen](https://www.youtube.com)")
-        return "YouTube-Link bereit."
+    if location:
+        m = folium.Map(
+            location=[location.latitude, location.longitude],
+            zoom_start=12
+        )
+        st_folium(m, width=900, height=500)
+        return f"Stadtplan von {city}"
+    return "Stadt nicht gefunden"
 
-    elif "google" in command:
-        st.markdown("[Google öffnen](https://www.google.com)")
-        return "Google-Link bereit."
+def execute(command):
+    cmd = command.lower()
+
+    if "uhrzeit" in cmd:
+        return datetime.now().strftime("%H:%M")
+
+    elif "datum" in cmd:
+        return str(datetime.now().date())
+
+    elif "stadtplan" in cmd:
+        city = cmd.replace("stadtplan", "").strip()
+        return show_city(city)
+
+    elif "rechne" in cmd:
+        expression = cmd.replace("rechne", "").strip()
+        try:
+            return str(eval(expression))
+        except:
+            return "Fehler in der Rechnung"
+
+    elif "hallo" in cmd:
+        return "Hallo! Ich bin deine KI."
 
     else:
-        return "Diesen Befehl kenne ich noch nicht."
+        return "Befehl nicht erkannt"
 
 if st.button("Ausführen"):
-    response = execute_command(command)
-    st.success(response)
+    result = execute(command)
+    st.success(result)
