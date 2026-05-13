@@ -1,31 +1,62 @@
 import streamlit as st
+import folium
+from streamlit_folium import st_folium
+from geopy.geocoders import Nominatim
 from datetime import datetime
 
-st.title("Meine Sprach-KI")
+st.set_page_config(page_title="Universal KI", layout="wide")
 
-command = st.text_input("Gib einen Befehl ein:")
+st.title("Universal KI")
 
-def execute_command(command):
-    command = command.lower()
+geolocator = Nominatim(user_agent="universal_ki")
 
-    if "hallo" in command:
-        return "Hallo! Wie kann ich helfen?"
+if "map_data" not in st.session_state:
+    st.session_state.map_data = None
 
-    elif "uhrzeit" in command:
-        now = datetime.now().strftime("%H:%M")
-        return f"Es ist {now} Uhr."
+command = st.text_input("Befehl eingeben")
 
-    elif "youtube" in command:
-        st.markdown("[YouTube öffnen](https://www.youtube.com)")
-        return "YouTube-Link bereit."
+def show_city(city):
+    location = geolocator.geocode(city)
 
-    elif "google" in command:
-        st.markdown("[Google öffnen](https://www.google.com)")
-        return "Google-Link bereit."
+    if location:
+        st.session_state.map_data = {
+            "lat": location.latitude,
+            "lon": location.longitude,
+            "name": city
+        }
+        return f"Stadtplan von {city} geladen"
+    return "Stadt nicht gefunden"
 
-    else:
-        return "Diesen Befehl kenne ich noch nicht."
+def execute(cmd):
+    cmd = cmd.lower()
+
+    if "uhrzeit" in cmd:
+        return datetime.now().strftime("%H:%M")
+
+    elif "stadtplan" in cmd:
+        city = cmd.replace("stadtplan", "").strip()
+        return show_city(city)
+
+    elif "hallo" in cmd:
+        return "Hallo!"
+
+    return "Befehl nicht erkannt"
 
 if st.button("Ausführen"):
-    response = execute_command(command)
-    st.success(response)
+    result = execute(command)
+    st.success(result)
+
+if st.session_state.map_data:
+    data = st.session_state.map_data
+
+    m = folium.Map(
+        location=[data["lat"], data["lon"]],
+        zoom_start=12
+    )
+
+    folium.Marker(
+        [data["lat"], data["lon"]],
+        popup=data["name"]
+    ).add_to(m)
+
+    st_folium(m, width=1000, height=600)
