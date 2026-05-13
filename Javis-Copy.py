@@ -1,46 +1,31 @@
 import streamlit as st
-import speech_recognition as sr
-import webbrowser
 from datetime import datetime
 
-st.title("Voice KI Assistent")
+st.title("Meine Sprach-KI")
 
-recognizer = sr.Recognizer()
-
-def listen():
-    with sr.Microphone() as source:
-        st.write("🎤 Ich höre...")
-        recognizer.adjust_for_ambient_noise(source)
-        audio = recognizer.listen(source)
-
-    try:
-        command = recognizer.recognize_google(audio, language="de-DE")
-        return command.lower()
-    except:
-        return "Ich konnte dich nicht verstehen."
+command = st.text_input("Gib einen Befehl ein:")
 
 def execute_command(command):
+    command = command.lower()
+
     if "hallo" in command:
         return "Hallo! Wie kann ich helfen?"
-
-    elif "öffne google" in command:
-        webbrowser.open("https://www.google.com")
-        return "Google wird geöffnet."
 
     elif "uhrzeit" in command:
         now = datetime.now().strftime("%H:%M")
         return f"Es ist {now} Uhr."
 
     elif "youtube" in command:
-        webbrowser.open("https://www.youtube.com")
-        return "YouTube wird geöffnet."
+        st.markdown("[YouTube öffnen](https://www.youtube.com)")
+        return "YouTube-Link bereit."
+
+    elif "google" in command:
+        st.markdown("[Google öffnen](https://www.google.com)")
+        return "Google-Link bereit."
 
     else:
         return "Diesen Befehl kenne ich noch nicht."
 
-if st.button("🎙 Spracheingabe starten"):
-    command = listen()
-    st.write(f"**Du hast gesagt:** {command}")
-
+if st.button("Ausführen"):
     response = execute_command(command)
     st.success(response)
